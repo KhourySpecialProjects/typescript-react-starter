@@ -1,0 +1,8 @@
+{
+  "ignorePatterns": [
+    "backend/src/generated/**",
+    "frontend/src/api/generated/**",
+    "backend/openapi.json",
+    "pnpm-lock.yaml"
+  ]
+}

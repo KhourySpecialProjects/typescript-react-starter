@@ -1,0 +1,19 @@
+import { createMiddleware } from "hono/factory";
+import { logger } from "../config/logger.js";
+
+function levelFor(status: number) {
+  if (status >= 500) return "error";
+  if (status >= 400) return "warn";
+  return "info";
+}
+
+export const requestLogger = createMiddleware(async (c, next) => {
+  const start = performance.now();
+  await next();
+
+  const { status } = c.res;
+  if (c.req.path === "/api/v1/health" && status < 400) return;
+
+  const durationMs = Math.round(performance.now() - start);
+  logger[levelFor(status)](`${c.req.method} ${c.req.path} ${status} ${durationMs}ms`);
+});
