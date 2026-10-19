@@ -28,5 +28,3 @@ Rules for anyone changing code here, human or agent. Before editing `backend/` o
 ## Finishing
 
 - Run `mise run check` and fix everything it reports.
-- Keep the attribution trailer your tool adds to commits (for example
-  `Co-Authored-By`). Do not remove it.
