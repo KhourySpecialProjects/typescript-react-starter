@@ -17,7 +17,7 @@ Docker.
 ```sh
 mise install
 cp .env.example .env
-mise run setup:dev
+mise run setup
 ```
 
 ## Run

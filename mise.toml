@@ -9,7 +9,7 @@ _.file = ".env"
 # instead of a terminal and drop their colors.
 FORCE_COLOR = "1"
 
-[tasks."setup:dev"]
+[tasks.setup]
 description = "Install dependencies, start and migrate the database, and generate the contract"
 run = ["pnpm install", { task = "db:dev:migrate:up" }, { task = "contract" }]
 
