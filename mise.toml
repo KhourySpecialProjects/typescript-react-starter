@@ -5,6 +5,9 @@ pnpm = "12.14.0"
 
 [env]
 _.file = ".env"
+# mise pipes task output to add the [task] prefix. Without this, tools see a pipe
+# instead of a terminal and drop their colors.
+FORCE_COLOR = "1"
 
 [tasks."setup:dev"]
 description = "Install dependencies, start and migrate the database, and generate the contract"
@@ -16,7 +19,7 @@ depends = ["dev:backend", "dev:frontend"]
 
 [tasks."dev:backend"]
 description = "Run the backend on :3000"
-depends = ["db:dev:start"]
+depends = ["db:dev:up"]
 dir = "backend"
 env = { NODE_ENV = "development" }
 run = "pnpm exec tsx watch src/server.ts"
@@ -38,22 +41,22 @@ run = "docker compose down"
 description = "Follow the logs of every container"
 run = "docker compose logs -f"
 
-[tasks."db:dev:start"]
+[tasks."db:dev:up"]
 description = "Start the development database"
 run = "docker compose up -d db --wait"
 
-[tasks."db:dev:stop"]
+[tasks."db:dev:down"]
 description = "Stop and remove the development database container. Its data is kept."
 run = "docker compose down db"
 
 [tasks."db:dev:studio"]
 description = "Open Prisma Studio on the development database (http://localhost:5555)"
-depends = ["db:dev:start"]
+depends = ["db:dev:up"]
 run = 'prisma studio --port 5555 --url "$DATABASE_URL"'
 
 [tasks."db:dev:psql"]
 description = "Open psql in the development database"
-depends = ["db:dev:start"]
+depends = ["db:dev:up"]
 run = "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\"'"
 
 [tasks."db:dev:migrate:generate"]
@@ -77,20 +80,20 @@ echo "Created $file. Review it, then run: mise run db:dev:migrate:up"
 
 [tasks."db:dev:migrate:up"]
 description = "Apply pending migrations to the development database"
-depends = ["db:dev:start"]
+depends = ["db:dev:up"]
 dir = "backend"
 run = "pnpm exec prisma migrate deploy"
 
 [tasks."db:dev:migrate:status"]
 description = "Show whether the development database is missing any migrations"
-depends = ["db:dev:start"]
+depends = ["db:dev:up"]
 dir = "backend"
 run = "pnpm exec prisma migrate status"
 
 [tasks."db:dev:migrate:down"]
 description = "Roll back the latest applied migration using its -- migrate:down section"
 confirm = "Roll back the latest migration? This can delete data."
-depends = ["db:dev:start"]
+depends = ["db:dev:up"]
 dir = "backend"
 run = """
 name=$(docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT migration_name FROM _prisma_migrations ORDER BY migration_name DESC LIMIT 1"')
@@ -108,7 +111,7 @@ echo "Rolled back $name. Revert its change in schema.prisma, or run db:dev:migra
 [tasks."db:dev:reset"]
 description = "Drop the development database and re-apply every migration"
 confirm = "Delete all data in the development database?"
-depends = ["db:dev:start"]
+depends = ["db:dev:up"]
 dir = "backend"
 run = "pnpm exec prisma migrate reset --force"
 
