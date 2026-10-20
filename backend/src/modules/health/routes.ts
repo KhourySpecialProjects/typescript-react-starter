@@ -1,4 +1,4 @@
-import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
 const Health = z.object({ status: z.literal("ok") }).openapi("Health");
 
@@ -13,6 +13,3 @@ export const getHealth = createRoute({
     },
   },
 });
-
-export const getHealthHandler: RouteHandler<typeof getHealth> = (c) =>
-  c.json({ status: "ok" as const }, 200);

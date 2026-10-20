@@ -1,22 +1,17 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "./config/logger.js";
 import { requestLogger } from "./middleware/logger.js";
-import { getHealth, getHealthHandler } from "./routes/health.js";
-import { listMessages, listMessagesHandler } from "./routes/messages.js";
+import { createRouter } from "./router.js";
+import { health } from "./modules/health/index.js";
+import { messages } from "./modules/messages/index.js";
 
-export const app = new OpenAPIHono({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      return c.json({ error: "Invalid request", issues: result.error.issues }, 400);
-    }
-  },
-}).basePath("/api/v1");
+export const app = createRouter().basePath("/api/v1");
 
 app.use(requestLogger);
 
-app.openapi(getHealth, getHealthHandler);
-app.openapi(listMessages, listMessagesHandler);
+// One line per module in modules/.
+app.route("/", health);
+app.route("/", messages);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
