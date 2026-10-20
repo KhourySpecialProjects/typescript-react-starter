@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Every step runs the same mise task you run locally, so `mise run check`
+# passing on your machine means these pass too.
+jobs:
+  frontend_lint:
+    name: frontend / lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v5
+      - run: pnpm install --frozen-lockfile
+      - run: mise run lint:frontend
+
+  frontend_format:
+    name: frontend / format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v5
+      - run: pnpm install --frozen-lockfile
+      - run: mise run fmt:frontend
+
+  backend_lint:
+    name: backend / lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v5
+      - run: pnpm install --frozen-lockfile
+      - run: mise run lint:backend
+
+  backend_contract:
+    name: backend / contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v5
+      - run: pnpm install --frozen-lockfile
+      - run: mise run contract:check
+
+  backend_format:
+    name: backend / format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v5
+      - run: pnpm install --frozen-lockfile
+      - run: mise run fmt:backend

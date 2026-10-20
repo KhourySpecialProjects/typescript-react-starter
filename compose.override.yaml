@@ -1,0 +1,12 @@
+services:
+  db:
+    environment:
+      POSTGRES_USER: ${SERVICE_USER_POSTGRES:?missing, run cp .env.example .env}
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:?missing, run cp .env.example .env}
+      POSTGRES_DB: ${POSTGRES_DB:?missing, run cp .env.example .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+  web:
+    ports:
+      - "127.0.0.1:8080:8080"
