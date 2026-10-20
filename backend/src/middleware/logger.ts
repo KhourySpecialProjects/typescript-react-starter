@@ -12,6 +12,8 @@ export const requestLogger = createMiddleware(async (c, next) => {
   await next();
 
   const { status } = c.res;
+
+  // no logs for healthchecks to reduce unnecessary noise
   if (c.req.path === "/api/v1/health" && status < 400) return;
 
   const durationMs = Math.round(performance.now() - start);

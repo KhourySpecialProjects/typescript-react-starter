@@ -12,7 +12,9 @@ export default defineConfig({
     "typescript/no-explicit-any": "error",
     "no-console": "error",
     eqeqeq: "error",
-    "func-style": ["error", "expression"],
+    // A warning, not an error: TypeScript overloads and hoisted helpers need
+    // function declarations.
+    "func-style": ["warn", "expression"],
     "prefer-arrow-callback": "error",
     "typescript/consistent-type-definitions": ["error", "type"],
     "react/react-in-jsx-scope": "off",

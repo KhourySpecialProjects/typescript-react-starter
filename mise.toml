@@ -26,15 +26,15 @@ description = "Run the frontend on :5173"
 dir = "frontend"
 run = "pnpm exec vite"
 
-[tasks."stack:dev:up"]
+[tasks."docker:dev:up"]
 description = "Build and start web, backend and db in Docker (web on :8080)"
 run = "docker compose up --build --wait"
 
-[tasks."stack:dev:down"]
+[tasks."docker:dev:down"]
 description = "Stop every container"
 run = "docker compose down"
 
-[tasks."stack:dev:logs"]
+[tasks."docker:dev:logs"]
 description = "Follow the logs of every container"
 run = "docker compose logs -f"
 
@@ -43,11 +43,7 @@ description = "Start the development database"
 run = "docker compose up -d db --wait"
 
 [tasks."db:dev:stop"]
-description = "Stop the development database"
-run = "docker compose stop db"
-
-[tasks."db:dev:down"]
-description = "Remove the development database container. Its data is kept."
+description = "Stop and remove the development database container. Its data is kept."
 run = "docker compose down db"
 
 [tasks."db:dev:studio"]
