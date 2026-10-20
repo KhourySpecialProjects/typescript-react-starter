@@ -11,3 +11,4 @@ paths:
   `mise run contract`. Do not hand-write types for API responses.
 - Use relative `/api/...` URLs. Vite proxies them in dev and nginx proxies them when
   deployed.
+- Use arrow functions for components and handlers: `export const App = () => {}`.

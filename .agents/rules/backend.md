@@ -11,6 +11,10 @@ paths:
   creates its own router.
 - Define every route with `createRoute` and zod schemas for its params, body and
   responses. The OpenAPI contract is built from these.
+- Query the database with `prisma.$queryRaw` / `prisma.$executeRaw` tagged templates
+  only. See "Queries" in `AGENTS.md`.
+- Change tables only through `prisma/schema.prisma` and
+  `mise run db:dev:migrate:generate <name>`.
 - Read environment variables through `env` from `src/config/env.ts`, never `process.env`.
   Add new ones to its schema and to `.env.example`.
 - Log with `logger` from `src/config/logger.ts`, never `console.log`.

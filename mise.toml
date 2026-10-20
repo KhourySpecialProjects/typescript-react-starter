@@ -1,6 +1,7 @@
 [tools]
 node = "24.22.0"
 pnpm = "12.14.0"
+"npm:prisma" = "7.9.1"
 
 [env]
 _.file = ".env"
@@ -45,9 +46,23 @@ run = "docker compose up -d db --wait"
 description = "Stop the development database"
 run = "docker compose stop db"
 
-[tasks."db:dev:migrate"]
-description = "Generate a migration from schema.prisma changes, with up and down SQL, and apply it (arg: name)"
-usage = 'arg "<name>"'
+[tasks."db:dev:down"]
+description = "Remove the development database container. Its data is kept."
+run = "docker compose down db"
+
+[tasks."db:dev:studio"]
+description = "Open Prisma Studio on the development database (http://localhost:5555)"
+depends = ["db:dev:start"]
+run = 'prisma studio --port 5555 --url "$DATABASE_URL"'
+
+[tasks."db:dev:psql"]
+description = "Open psql in the development database"
+depends = ["db:dev:start"]
+run = "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\"'"
+
+[tasks."db:dev:migrate:generate"]
+description = "Generate a SQL migration, with up and down sections, from changes to schema.prisma (arg: name)"
+usage = 'arg "<name>" help="snake_case description, e.g. add_users"'
 depends = ["db:dev:migrate:up"]
 dir = "backend"
 run = """
@@ -61,7 +76,7 @@ file="$(ls -d prisma/migrations/*_"$usage_name" | tail -n 1)/migration.sql"
   printf '\n\n-- migrate:down\n'
   pnpm exec prisma migrate diff --from-schema prisma/schema.prisma --to-config-datasource --script | grep -v '^$' | sed 's/^/-- /'
 } >> "$file"
-pnpm exec prisma migrate dev
+echo "Created $file. Review it, then run: mise run db:dev:migrate:up"
 """
 
 [tasks."db:dev:migrate:up"]
@@ -69,6 +84,12 @@ description = "Apply pending migrations to the development database"
 depends = ["db:dev:start"]
 dir = "backend"
 run = "pnpm exec prisma migrate deploy"
+
+[tasks."db:dev:migrate:status"]
+description = "Show whether the development database is missing any migrations"
+depends = ["db:dev:start"]
+dir = "backend"
+run = "pnpm exec prisma migrate status"
 
 [tasks."db:dev:migrate:down"]
 description = "Roll back the latest applied migration using its -- migrate:down section"
@@ -95,34 +116,46 @@ depends = ["db:dev:start"]
 dir = "backend"
 run = "pnpm exec prisma migrate reset --force"
 
-[tasks."db:dev:studio"]
-description = "Browse the development database in Prisma Studio"
-depends = ["db:dev:start"]
-dir = "backend"
-run = "pnpm exec prisma studio"
+[tasks.contract]
+description = "Regenerate backend/openapi.json, then the frontend client from it"
+run = [{ task = "contract:backend:generate" }, { task = "contract:frontend:generate" }]
 
-[tasks."db:generate"]
+[tasks."contract:backend:generate"]
+description = "Write the backend's OpenAPI spec to backend/openapi.json"
+depends = ["prisma:generate"]
+run = "pnpm --filter backend exec tsx scripts/openapi.ts"
+
+[tasks."contract:frontend:generate"]
+description = "Generate the frontend client in frontend/src/api/generated from backend/openapi.json"
+run = "pnpm --filter frontend exec openapi-ts"
+
+[tasks."contract:check"]
+description = "Fail if backend/openapi.json is out of date with the backend code"
+depends = ["contract:backend:generate"]
+run = "git diff --exit-code --stat backend/openapi.json || (echo 'backend/openapi.json is out of date. Run mise run contract and commit it.' >&2; exit 1)"
+
+[tasks."prisma:generate"]
 description = "Generate the Prisma client from schema.prisma"
 dir = "backend"
 run = "pnpm exec prisma generate"
 
-[tasks.contract]
-description = "Export the OpenAPI spec from the backend and generate the frontend client"
-depends = ["db:generate"]
-run = [
-  "pnpm --filter backend exec tsx scripts/openapi.ts",
-  "pnpm --filter frontend exec openapi-ts",
-]
-
 [tasks."lint:backend"]
 description = "Lint and typecheck the backend"
-depends = ["contract"]
+depends = ["prisma:generate"]
 run = ["pnpm exec oxlint --type-aware backend", "pnpm --filter backend exec tsc --noEmit"]
+
+[tasks."lint:backend:fix"]
+description = "Fix backend lint issues"
+run = "pnpm exec oxlint --type-aware --fix backend"
 
 [tasks."lint:frontend"]
 description = "Lint and typecheck the frontend"
-depends = ["contract"]
+depends = ["contract:frontend:generate"]
 run = ["pnpm exec oxlint --type-aware frontend", "pnpm --filter frontend exec tsc --noEmit"]
+
+[tasks."lint:frontend:fix"]
+description = "Fix frontend lint issues"
+run = "pnpm exec oxlint --type-aware --fix frontend"
 
 [tasks.lint]
 description = "Lint and typecheck everything"
@@ -130,15 +163,27 @@ depends = ["lint:backend", "lint:frontend"]
 
 [tasks."lint:fix"]
 description = "Fix lint issues everywhere"
-run = "pnpm exec oxlint --type-aware --fix ."
+depends = ["lint:backend:fix", "lint:frontend:fix"]
 
 [tasks."fmt:backend"]
+alias = "format:backend"
 description = "Check backend formatting"
 run = "pnpm exec oxfmt --check backend"
 
+[tasks."fmt:backend:fix"]
+alias = "format:backend:fix"
+description = "Format the backend"
+run = "pnpm exec oxfmt backend"
+
 [tasks."fmt:frontend"]
+alias = "format:frontend"
 description = "Check frontend formatting"
 run = "pnpm exec oxfmt --check frontend"
+
+[tasks."fmt:frontend:fix"]
+alias = "format:frontend:fix"
+description = "Format the frontend"
+run = "pnpm exec oxfmt frontend"
 
 [tasks.fmt]
 alias = "format"
@@ -152,9 +197,9 @@ run = "pnpm exec oxfmt ."
 
 [tasks.build]
 description = "Build the backend and frontend"
-depends = ["contract"]
+depends = ["prisma:generate", "contract:frontend:generate"]
 run = ["pnpm --filter backend run build", "pnpm --filter frontend run build"]
 
 [tasks.check]
 description = "Run everything CI runs"
-depends = ["fmt", "lint"]
+depends = ["fmt", "lint", "contract:check"]

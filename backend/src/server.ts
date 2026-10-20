@@ -8,9 +8,9 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   logger.info(`listening on http://localhost:${info.port}`);
 });
 
-function shutdown() {
+const shutdown = () => {
   server.close(() => void prisma.$disconnect());
-}
+};
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);

@@ -21,8 +21,15 @@ export const listMessages = createRoute({
   },
 });
 
+type MessageRow = { id: number; text: string; createdAt: Date };
+
 export const listMessagesHandler: RouteHandler<typeof listMessages> = async (c) => {
-  const rows = await prisma.message.findMany({ orderBy: { createdAt: "desc" }, take: 50 });
+  const rows = await prisma.$queryRaw<MessageRow[]>`
+    SELECT id, text, created_at AS "createdAt"
+    FROM messages
+    ORDER BY created_at DESC, id DESC
+    LIMIT 50
+  `;
   return c.json(
     rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() })),
     200,

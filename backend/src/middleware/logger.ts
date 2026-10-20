@@ -1,11 +1,11 @@
 import { createMiddleware } from "hono/factory";
 import { logger } from "../config/logger.js";
 
-function levelFor(status: number) {
+const levelFor = (status: number) => {
   if (status >= 500) return "error";
   if (status >= 400) return "warn";
   return "info";
-}
+};
 
 export const requestLogger = createMiddleware(async (c, next) => {
   const start = performance.now();

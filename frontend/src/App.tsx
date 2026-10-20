@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { listMessages, type Message } from "./api/generated";
 
-export function App() {
+export const App = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string>();
 
-  async function load() {
+  const load = async () => {
     const result = await listMessages();
     if (!result.data) {
       setError("Could not load messages");
@@ -13,7 +13,7 @@ export function App() {
     }
     setError(undefined);
     setMessages(result.data);
-  }
+  };
 
   return (
     <main>
@@ -28,4 +28,4 @@ export function App() {
       </ul>
     </main>
   );
-}
+};

@@ -1,6 +1,8 @@
 import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
 import { prisma } from "../config/db.js";
 
+const Health = z.object({ status: z.literal("ok") }).openapi("Health");
+
 export const getHealth = createRoute({
   operationId: "getHealth",
   method: "get",
@@ -8,7 +10,7 @@ export const getHealth = createRoute({
   responses: {
     200: {
       description: "The API and database are reachable",
-      content: { "application/json": { schema: z.object({ status: z.literal("ok") }) } },
+      content: { "application/json": { schema: Health } },
     },
   },
 });
